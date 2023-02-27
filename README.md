@@ -3,6 +3,8 @@
 This program implements the following policies to simulate job queueing through multi servers.
 
 - fcfsLocal: First Come First Serve, all jobs are served locally (jobs from region A will not be served in region B)
+- fcfsCross: First Come First Serve, all jobs may be served at a remote server if current region is congested
+- fcfsCrossPart: First Come First Serve, only small jobs may be served at a remote server if current region is congested
 
 ## Requirements
 
@@ -27,11 +29,15 @@ Using default parameters, run
 Options:
 
 <table>
-	<tr>
-		<td><code>-h</code></td>
-		<td>Show this help message.</td>
-	</tr>
   <tr>
+    <td><code>-h</code></td>
+    <td>Show this help message.</td>
+  </tr>
+  <tr>
+  <tr>
+    <td><code>-p</code></td>
+    <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>. default <code>fcfsLocal</code></td>
+  </tr>
     <td><code>-t time</code></td>
     <td>Specify a simulation iteration of <code>time</code> units. default <code>1000000</code></td>
   </tr>
@@ -59,5 +65,5 @@ Options:
 
 Example:
 ```bash
-./sim -t 100000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v
+./sim -t 100000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross
 ```

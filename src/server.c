@@ -58,3 +58,9 @@ void serveJobs(Server* server) {
 	server->jobBuffer.jobs = newJobs;
 	server->jobBuffer.jobCnt = newJobCnt;
 }
+
+uint8_t canServe(Server* server, Job* job) {
+	uint8_t jobType = 0;
+	if (job != NULL) jobType = job->jobType;
+	return (server->idleCnt >= SERVER_NEEDS[jobType]);
+}

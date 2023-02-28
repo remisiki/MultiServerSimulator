@@ -7,6 +7,9 @@
 *   server if current region is congested
 * - fcfsCrossPart: First Come First Serve, only small jobs may be served at a
 *   remote server if current region is congested
+* - o3CrossPart: Out Of Order, only small jobs may be served at a remote server
+*   if current region is congested and smaller jobs coming late may get served
+*   first
 */
 #ifndef _POLICY_H
 #define _POLICY_H
@@ -22,6 +25,10 @@
 #include "region.h"
 #include "param.h"
 
+/**
+* Schedule servers according to policy, returns a sum of queueing length in one
+* time unit (of all regions).
+*/
 uint32_t schedule(Server** servers, const char* policy);
 
 #endif

@@ -20,6 +20,7 @@ void pushQueue(Queue* q, Job* job) {
 	Node* node = (Node*)malloc(sizeof(Node));
 	node->job = job;
 	node->next = NULL;
+	node->prev = q->tail;
 	if (queueIsEmpty(q)) {
 		q->head = node;
 		q->tail = node;
@@ -39,8 +40,25 @@ void popQueue(Queue* q) {
 		q->size --;
 		if (q->head == NULL) {
 			q->tail = NULL;
+		} else {
+			q->head->prev = NULL;
 		}
 	}
+}
+
+void removeQueue(Queue* q, Node* node) {
+	if (node->prev != NULL) {
+		node->prev->next = node->next;
+	} else {
+		q->head = node->next;
+	}
+	if (node->next != NULL) {
+		node->next->prev = node->prev;
+	} else {
+		q->tail = node->prev;
+	}
+	free(node);
+	q->size --;
 }
 
 void freeQueue(Queue* q) {

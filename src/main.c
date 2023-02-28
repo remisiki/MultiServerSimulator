@@ -23,7 +23,7 @@ uint32_t* SERVER_NEEDS;
 int main(int argc, char const *argv[]) {
 
 	// Default parameters
-	SIMULATION_TIME = 1E6;
+	SIMULATION_TIME = 1E5;
 	PROC_CNT = 48;
 	JOB_TYPE_CNT = 2;
 	ARRIVAL_RATE = (double*)malloc(JOB_TYPE_CNT*sizeof(double));
@@ -82,11 +82,11 @@ int main(int argc, char const *argv[]) {
 			printf("MultiServerSimulator\nOptions:\n");
 			printf("%-20s Show this help message.\n", "-h");
 			printf("%-20s Specify policy from fcfsLocal, fcfsCross, fcfsCrossPart. default fcfsLocal\n", "-p");
-			printf("%-20s Specify a simulation iteration of time units. default 1000000\n", "-t time");
+			printf("%-20s Specify a simulation iteration of time units. default 100000\n", "-t time");
 			printf("%-20s Specify number of processors for each server to be num. This will force all servers to have the same number. default 48\n", "-n num");
 			printf("%-20s Specify job type count as jobCnt. Must be set before (and together with) -l and -s. default 2\n", "-j jobCnt");
 			printf("%-20s Specify arrival rate. Must be set together with -j. lambda must have size of jobCnt and is separated by a comma (,, with no spaces). default 10,4\n", "-l [lambda...]");
-			printf("%-20s Specify mean service time. Must be set together with -j. serviceTime must have size of jobCnt and is separated by a comma (,, with no spaces). default 1,4\n", "-s [serviceTime...]");
+			printf("%-20s Specify server needs. Must be set together with -j. servers must have size of jobCnt and is separated by a comma (,, with no spaces). default 1,4\n", "-s [servers...]");
 			printf("%-20s Run simulation verbosely.\n", "-v");
 			free(ARRIVAL_RATE);
 			free(SERVER_NEEDS);
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[]) {
 			printf("%lf ", ARRIVAL_RATE[i]);
 		}
 		printf("\n");
-		printf("Mean server needs: ");
+		printf("Server needs: ");
 		for (uint8_t i = 0; i < JOB_TYPE_CNT; i ++) {
 			printf("%d ", SERVER_NEEDS[i]);
 		}
@@ -145,7 +145,11 @@ int main(int argc, char const *argv[]) {
 		printf("\n");
 		printf("Stop simulation\n");
 	}
-	printf("Expected queue length: %lf\n", expectedQueueLength);
+	if (verbose) {
+		printf("Expected queue length: %lf\n", expectedQueueLength);
+	} else {
+		printf("%lf\n", expectedQueueLength);
+	}
 
 	// Cleanup
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {

@@ -57,4 +57,10 @@ void assignJobToServer(Server* server, Job* job);
 */
 void serveJobs(Server* server);
 
+/**
+* Determine whether a server can serve the job
+* If job is a NULL, compare against smallest job type.
+*/
+uint8_t canServe(Server* server, Job* job);
+
 #endif

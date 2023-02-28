@@ -1,6 +1,6 @@
 CC      = gcc
 
-CFLAGS  = -std=c11 -Wconversion -Wall -Werror -Wextra -pedantic -mrdrnd
+CFLAGS  = -std=c11 -Wconversion -Wall -Werror -Wextra -pedantic -mrdrnd -O3
 
 LDFLAGS = 
 

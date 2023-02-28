@@ -3,8 +3,8 @@
 * Uncomment printf lines to see verbose results, only do this on small
 * simulation iterations. Using gdb is better, but printf is just simple and
 * fast.
-* TODO Why fcfsCross and fcfsCrossPart performs much worse?
-* TODO Implement o3CrossPart
+* TODO Why fcfsCross and fcfsCrossPart performs much worse? MEAN_SERVICE_TIME
+* matters a lot.
 * TODO Add mean waiting time to the return value
 */
 #include "policy.h"
@@ -15,6 +15,8 @@ void fcfsCross(Server**);
 
 void fcfsCrossPart(Server**);
 
+void o3CrossPart(Server**);
+
 uint32_t schedule(Server** servers, const char* policy) {
 	uint32_t sumQueueLength = 0;
 	if (strcmp(policy, "fcfsLocal") == 0) {
@@ -23,6 +25,8 @@ uint32_t schedule(Server** servers, const char* policy) {
 		fcfsCross(servers);
 	} else if (strcmp(policy, "fcfsCrossPart") == 0) {
 		fcfsCrossPart(servers);
+	} else if (strcmp(policy, "o3CrossPart") == 0) {
+		o3CrossPart(servers);
 	}
 	// Serve all jobs in the processors for one time unit and record queue length
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {
@@ -42,36 +46,25 @@ void fcfsLocal(Server** servers) {
 		Server* server = servers[i];
 		while (!queueIsEmpty(server->waitingQueue)) {
 			Job* job = server->waitingQueue->head->job;
-			if (server->idleCnt >= SERVER_NEEDS[job->jobType]) {
+			if (canServe(server, job)) {
 				assignJobToServer(server, job);
-				/* printf("Assign job of type %d to server %d from queue, remaining idle %d\n", job->jobType, i, server->idleCnt); */
 				popQueue(server->waitingQueue);
 			} else {
+				// Block the queue if head cannot be served
 				break;
 			}
 		}
 	}
 	// Create random new jobs
 	JobBuffer jobBuffer = newJobs();
-	/* printf("%d\n", jobBuffer.jobCnt); */
 	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
 		Job* job = jobBuffer.jobs[i];
-		/* printJob(jobBuffer.jobs[i]); */
-		// Loop through all regions in order.
-		// TODO This policy does not include cross region operations, but all
-		// others do. How to simulate when multi jobs from different regions come
-		// to the same server? This is tricky in a single thread program.
-		for (uint32_t j = 0; j < REGION_CNT; j ++) {
-			Server* server = servers[j];
-			if (server->region == job->region) {
-				if (server->idleCnt >= SERVER_NEEDS[job->jobType]) {
-					assignJobToServer(server, job);
-					/* printf("Assign job of type %d to server %d, remaining idle %d\n", job->jobType, j, server->idleCnt); */
-				} else {
-					pushQueue(server->waitingQueue, job);
-					/* printf("Server %d full, current queue length %d\n", j, getQueueSize(server->waitingQueue)); */
-				}
-			}
+		// Only serve the job locally
+		Server* server = servers[job->region];
+		if (canServe(server, job)) {
+			assignJobToServer(server, job);
+		} else {
+			pushQueue(server->waitingQueue, job);
 		}
 	}
 	// OK to free the pointer to new jobs, as all jobs are either pushed into
@@ -86,13 +79,13 @@ void fcfsLocal(Server** servers) {
 */
 int getBestRegion(Server** servers, Job* job) {
 	int bestRegion = -1;
-	if (servers[job->region]->idleCnt < SERVER_NEEDS[job->jobType]) {
+	if (!canServe(servers[job->region], job)) {
 		uint32_t minServiceTime = UINT32_MAX;
 		for (uint32_t j = 0; j < REGION_CNT; j ++) {
 			Server* server = servers[j];
 			uint32_t serviceTime = MEAN_SERVICE_TIME[server->region][job->region];
 			if (
-				(server->idleCnt >= SERVER_NEEDS[job->jobType]) &&
+				(canServe(server, job)) &&
 				(serviceTime < minServiceTime)
 			) {
 				bestRegion = (int)server->region;
@@ -112,31 +105,25 @@ void fcfsCross(Server** servers) {
 		Server* server = servers[i];
 		while (!queueIsEmpty(server->waitingQueue)) {
 			Job* job = server->waitingQueue->head->job;
+			// Check the best region that can serve the job
 			int bestRegion = getBestRegion(servers, job);
 			if (bestRegion != -1) {
-				/* printf("%d %d\n", bestRegion, servers[bestRegion]->idleCnt); */
-			/* } */
-			/* if (server->idleCnt >= SERVER_NEEDS[job->jobType]) { */
 				assignJobToServer(servers[bestRegion], job);
-				/* assignJobToServer(server, job); */
-				/* printf("Assign job of type %d to server %d from queue, remaining idle %d\n", job->jobType, i, server->idleCnt); */
 				popQueue(server->waitingQueue);
 			} else {
+				// No region available, block the queue
 				break;
 			}
 		}
 	}
 	// Create random new jobs
 	JobBuffer jobBuffer = newJobs();
-	/* printf("%d\n", jobBuffer.jobCnt); */
 	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
 		Job* job = jobBuffer.jobs[i];
-		/* printJob(jobBuffer.jobs[i]); */
+		// Also check the best region for new coming jobs
 		int bestRegion = getBestRegion(servers, job);
-		/* if ((bestRegion != -1) && (bestRegion != (int)job->region)) { */
-		/* 	printf("Assigning job from region %d to region %d, server0 queue length %d, server1 queue length %d\n", job->region, bestRegion, servers[0]->waitingQueue->size, servers[1]->waitingQueue->size); */
-		/* } */
 		if (bestRegion == -1) {
+			// No region available, push into local quueue
 			pushQueue(servers[job->region]->waitingQueue, job);
 		} else {
 			assignJobToServer(servers[bestRegion], job);
@@ -156,18 +143,18 @@ void fcfsCrossPart(Server** servers) {
 			Job* job = server->waitingQueue->head->job;
 			// Same as fcfsCross, but only cross when small jobs
 			if (job->jobType == 0) {
+				// Small job, check cross region availability
 				int bestRegion = getBestRegion(servers, job);
 				if (bestRegion != -1) {
 					assignJobToServer(servers[bestRegion], job);
-					/* printf("Assign job of type %d to server %d from queue, remaining idle %d\n", job->jobType, i, server->idleCnt); */
 					popQueue(server->waitingQueue);
 				} else {
 					break;
 				}
 			} else {
-				if (server->idleCnt >= SERVER_NEEDS[job->jobType]) {
+				// Large jobs, serve locally
+				if (canServe(server, job)) {
 					assignJobToServer(server, job);
-					/* printf("Assign job of type %d to server %d from queue, remaining idle %d\n", job->jobType, i, server->idleCnt); */
 					popQueue(server->waitingQueue);
 				} else {
 					break;
@@ -177,12 +164,11 @@ void fcfsCrossPart(Server** servers) {
 	}
 	// Create random new jobs
 	JobBuffer jobBuffer = newJobs();
-	/* printf("%d\n", jobBuffer.jobCnt); */
 	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
 		Job* job = jobBuffer.jobs[i];
-		/* printJob(jobBuffer.jobs[i]); */
 		// Same as fcfsCross, but only cross when small jobs
 		if (job->jobType == 0) {
+			// Small job, check cross region availability
 			int bestRegion = getBestRegion(servers, job);
 			if (bestRegion == -1) {
 				pushQueue(servers[job->region]->waitingQueue, job);
@@ -190,7 +176,8 @@ void fcfsCrossPart(Server** servers) {
 				assignJobToServer(servers[bestRegion], job);
 			}
 		} else {
-			if (servers[job->region]->idleCnt >= SERVER_NEEDS[job->jobType]) {
+			// Large jobs, serve locally
+			if (canServe(servers[job->region], job)) {
 				assignJobToServer(servers[job->region], job);
 			} else {
 				pushQueue(servers[job->region]->waitingQueue, job);
@@ -199,5 +186,63 @@ void fcfsCrossPart(Server** servers) {
 	}
 	// OK to free the pointer to new jobs, as all jobs are either pushed into
 	// processors or waiting queue, which will be freed when servers are freed
+	free(jobBuffer.jobs);
+}
+
+void o3CrossPart(Server** servers) {
+	// Check whether all regions are full (cannot serve smallest job)
+	uint8_t allRegionFull = 1;
+	for (uint32_t i = 0; i < REGION_CNT; i ++) {
+		if (canServe(servers[i], NULL)) {
+			allRegionFull = 0;
+			break;
+		}
+	}
+	// Only scan the queue if at least one region is not congested
+	if (!allRegionFull) {
+		for (uint32_t i = 0; i < REGION_CNT; i ++) {
+			Server* server = servers[i];
+			// Same as fcfsCrossPart, but iterate through the queue to find all
+			// possible jobs that can be served
+			Node* pos = server->waitingQueue->head;
+			while (pos != NULL) {
+				Job* job = pos->job;
+				Node* next = pos->next;
+				if (job->jobType == 0) {
+					int bestRegion = getBestRegion(servers, job);
+					if (bestRegion != -1) {
+						assignJobToServer(servers[bestRegion], job);
+						removeQueue(server->waitingQueue, pos);
+					}
+				} else {
+					if (canServe(server, job)) {
+						assignJobToServer(server, job);
+						removeQueue(server->waitingQueue, pos);
+					}
+				}
+				pos = next;
+			}
+		}
+	}
+	// Create random new jobs
+	// Same as fcfsCrossPart
+	JobBuffer jobBuffer = newJobs();
+	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
+		Job* job = jobBuffer.jobs[i];
+		if (job->jobType == 0) {
+			int bestRegion = getBestRegion(servers, job);
+			if (bestRegion == -1) {
+				pushQueue(servers[job->region]->waitingQueue, job);
+			} else {
+				assignJobToServer(servers[bestRegion], job);
+			}
+		} else {
+			if (canServe(servers[job->region], job)) {
+				assignJobToServer(servers[job->region], job);
+			} else {
+				pushQueue(servers[job->region]->waitingQueue, job);
+			}
+		}
+	}
 	free(jobBuffer.jobs);
 }

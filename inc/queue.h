@@ -1,5 +1,6 @@
 /**
 * Module implementing a FIFO queue
+* This is a queue, but it also supports removing elements like a linked list.
 */
 #ifndef _QUEUE_H
 #define _QUEUE_H
@@ -12,6 +13,7 @@
 */
 typedef struct Node {
 	Job* job;
+	struct Node* prev;
 	struct Node* next;
 } Node;
 
@@ -52,6 +54,14 @@ void pushQueue(Queue* q, Job* job);
 * returned, you may need to store q->head before pop.
 */
 void popQueue(Queue* q);
+
+/**
+* Remove an element pos from the queue
+* This function frees the pointer to the node, but not freeing the job in the
+* node (the job still needs to be freed manually). The node is not returned,
+* be sure to store node somewhere.
+*/
+void removeQueue(Queue* q, Node* node);
 
 /**
 * Free a queue

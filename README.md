@@ -5,6 +5,7 @@ This program implements the following policies to simulate job queueing through 
 - fcfsLocal: First Come First Serve, all jobs are served locally (jobs from region A will not be served in region B)
 - fcfsCross: First Come First Serve, all jobs may be served at a remote server if current region is congested
 - fcfsCrossPart: First Come First Serve, only small jobs may be served at a remote server if current region is congested
+- o3CrossPart: Out Of Order, only small jobs may be served at a remote server if current region is congested and smaller jobs coming late may get served first
 
 ## Requirements
 
@@ -39,7 +40,7 @@ Options:
     <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>. default <code>fcfsLocal</code></td>
   </tr>
     <td><code>-t time</code></td>
-    <td>Specify a simulation iteration of <code>time</code> units. default <code>1000000</code></td>
+    <td>Specify a simulation iteration of <code>time</code> units. default <code>100000</code></td>
   </tr>
   <tr>
     <td><code>-n num</code></td>
@@ -54,8 +55,8 @@ Options:
     <td>Specify arrival rate. Must be set together with <code>-j</code>. <code>lambda</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code>, with no spaces). default <code>10,4</code></td>
   </tr>
   <tr>
-    <td><code>-s [serviceTime...]</code></td>
-    <td>Specify mean service time. Must be set together with <code>-j</code>. <code>serviceTime</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code>, with no spaces). default <code>1,4</code></td>
+    <td><code>-s [servers...]</code></td>
+    <td>Specify server needs. Must be set together with <code>-j</code>. <code>servers</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code>, with no spaces). default <code>1,4</code></td>
   </tr>
   <tr>
     <td><code>-v</code></td>
@@ -67,3 +68,5 @@ Example:
 ```bash
 ./sim -t 100000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross
 ```
+
+To modify server (or region) numbers and mean service time cross regions, go to `region.c` and change the values according to `region.h`. This paramemter is hardcoded, may consider a better way to parse it.

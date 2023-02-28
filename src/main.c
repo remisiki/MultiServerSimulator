@@ -81,7 +81,7 @@ int main(int argc, char const *argv[]) {
 		} else if (strcmp(argv[i], "-h") == 0) {
 			printf("MultiServerSimulator\nOptions:\n");
 			printf("%-20s Show this help message.\n", "-h");
-			printf("%-20s Specify policy from fcfsLocal, fcfsCross, fcfsCrossPart. default fcfsLocal\n", "-p");
+			printf("%-20s Specify policy from fcfsLocal, fcfsCross, fcfsCrossPart, o3CrossPart. default fcfsLocal\n", "-p");
 			printf("%-20s Specify a simulation iteration of time units. default 100000\n", "-t time");
 			printf("%-20s Specify number of processors for each server to be num. This will force all servers to have the same number. default 48\n", "-n num");
 			printf("%-20s Specify job type count as jobCnt. Must be set before (and together with) -l and -s. default 2\n", "-j jobCnt");

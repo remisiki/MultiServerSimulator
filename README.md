@@ -37,7 +37,7 @@ Options:
   <tr>
   <tr>
     <td><code>-p</code></td>
-    <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>. default <code>fcfsLocal</code></td>
+    <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>, <code>o3CrossPart</code>. default <code>fcfsLocal</code></td>
   </tr>
     <td><code>-t time</code></td>
     <td>Specify a simulation iteration of <code>time</code> units. default <code>100000</code></td>

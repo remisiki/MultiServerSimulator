@@ -20,7 +20,10 @@ JobBuffer newJobs() {
 		}
 	}
 	// Shuffle the jobs (closer to reality)
-	gsl_ran_shuffle(RNG, jobs, jobCnt, sizeof(Job*));
+  // Only shuffle if jobs is not empty
+  if (jobCnt > 0) {
+    gsl_ran_shuffle(RNG, jobs, jobCnt, sizeof(Job*));
+  }
 
 	JobBuffer jobBuffer;
 	jobBuffer.jobs = jobs;

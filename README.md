@@ -24,40 +24,7 @@ make
 
 ### Run (and plot) using scripts
 
-  #### Config
-
-  Put your config in a JSON file, such as `config.json`. This file should looks like the example provided. See [command line options](#command-line-options) for details of corresponding fields.
-  ```javascript
-  // Remove all comments to get a valid json
-  [
-    // An array of parameter sets
-    {
-      // (-n) number of processors per server
-      "processor": 96,
-      // (-j) job type count, must be set together with arrivalRate and serverNeeds
-      "jobTypeCnt": 3,
-      // (-l) arrival rates, must be of length jobTypeCnt
-      "arrivalRate": [10, 4, 2],
-      // (-s) server needs, must be of length jobTypeCnt
-      "serverNeeds": [1, 4, 5],
-      // (-r) region count, must be set together with serviceTime
-      "regionCnt": 3,
-      // (-a) mean service time across region
-      "serviceTime": [
-        [1, 2, 3],
-        [2, 1, 4],
-        [3, 4, 1]
-      ]
-    },
-    {
-      // More parameter sets
-    }
-  ]
-  ```
-
-  #### Python scripts
-
-  An example running config files can be found in `scripts/sim.py`.
+  An example can be found in `scripts/sim.py`.
 
 ### Run from command line
 

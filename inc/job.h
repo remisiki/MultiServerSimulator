@@ -9,6 +9,9 @@
 #include <gsl/gsl_randist.h>
 #include "param.h"
 
+// Initial job buffer allocation size
+extern const uint32_t INIT_JOB_BUFFER_SIZE;
+
 /**
 * Job struct
 * @param jobType an integer in [0, JOB_TYPE_CNT) defined in param.h
@@ -23,10 +26,13 @@ typedef struct Job {
 
 /**
 * A buffer of jobs, including job counts
+* @param jobCnt Number of jobs (not NULL) in the buffer
+* @param size Size allocated to the struct
 */
 typedef struct JobBuffer {
 	Job** jobs;
 	uint32_t jobCnt;
+	uint32_t size;
 } JobBuffer;
 
 /**

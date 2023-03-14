@@ -1,5 +1,8 @@
 #include "job.h"
 
+// A value that is helpful when queue grows large.
+const uint32_t INIT_JOB_BUFFER_SIZE = 16;
+
 JobBuffer newJobs() {
 	uint32_t jobCnt = 0;
 	Job** jobs = (Job**)malloc(jobCnt);
@@ -22,6 +25,7 @@ JobBuffer newJobs() {
 	JobBuffer jobBuffer;
 	jobBuffer.jobs = jobs;
 	jobBuffer.jobCnt = jobCnt;
+	jobBuffer.size = jobCnt;
 	return jobBuffer;
 }
 

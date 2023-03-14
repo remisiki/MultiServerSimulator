@@ -7,8 +7,8 @@ Server* newServer(uint32_t region, uint32_t processorCnt) {
 	server->idleCnt = processorCnt;
 	Queue* q = newQueue();
 	server->waitingQueue = q;
-	Job** jobs = (Job**)malloc(0);
-	JobBuffer jobBuffer = {jobs, 0};
+	Job** jobs = (Job**)malloc(INIT_JOB_BUFFER_SIZE*sizeof(Job*));
+	JobBuffer jobBuffer = {jobs, 0, INIT_JOB_BUFFER_SIZE};
 	server->jobBuffer = jobBuffer;
 	return server;
 }
@@ -27,19 +27,27 @@ uint32_t calcServiceTime(Server* server, Job* job) {
 }
 
 void assignJobToServer(Server* server, Job* job) {
-	// TODO Realloc each time is too expensive. Adjust jobBuffer size by doubling
-	// if not enough.
 	job->timeToFinish = calcServiceTime(server, job);
 	server->jobBuffer.jobCnt ++;
-	server->jobBuffer.jobs = (Job**)realloc(server->jobBuffer.jobs, server->jobBuffer.jobCnt*sizeof(Job*));
+	if (server->jobBuffer.jobCnt > server->jobBuffer.size) {
+		if (server->jobBuffer.size == 0) {
+			// If is empty, assign init size
+			server->jobBuffer.size = INIT_JOB_BUFFER_SIZE;
+		} else {
+			// Else double the size
+			server->jobBuffer.size <<= 1;
+		}
+		server->jobBuffer.jobs = (Job**)realloc(server->jobBuffer.jobs, server->jobBuffer.size*sizeof(Job*));
+	}
 	server->jobBuffer.jobs[server->jobBuffer.jobCnt-1] = job;
 	server->idleCnt -= (SERVER_NEEDS[job->jobType]);
 }
 
 void serveJobs(Server* server) {
-	// TODO Here copies all non-completed jobs to a new array. Not too bad but
-	// maybe implementing a linked list will be better?
-	Job** newJobs = (Job**)malloc(server->jobBuffer.jobCnt*sizeof(Job*));
+	// Here copies all non-completed jobs to a new array. Not too bad since only
+	// pointers are moved. Implementing a linked list may cost more to delete all
+	// links one by one.
+	Job** newJobs = (Job**)malloc(server->jobBuffer.size*sizeof(Job*));
 	uint32_t newJobCnt = 0;
 	for (uint32_t i = 0; i < server->jobBuffer.jobCnt; i ++) {
 		Job* job = server->jobBuffer.jobs[i];
@@ -53,7 +61,8 @@ void serveJobs(Server* server) {
 			free(job);
 		}
 	}
-	newJobs = (Job**)realloc(newJobs, newJobCnt*sizeof(Job*));
+	// No need to reallocate, since size not changed. Size of buffer will not
+	// grow beyond twice the processorCnt, quite safe not to shrink.
 	free(server->jobBuffer.jobs);
 	server->jobBuffer.jobs = newJobs;
 	server->jobBuffer.jobCnt = newJobCnt;

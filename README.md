@@ -22,12 +22,51 @@ make
 
 ## Usage
 
-Using default parameters, run 
-```bash
-./sim
-```
+### Run (and plot) using scripts
 
-Options:
+  #### Config
+
+  Put your config in a JSON file, such as `config.json`. This file should looks like the example provided. See [command line options](#command-line-options) for details of corresponding fields.
+  ```javascript
+  // Remove all comments to get a valid json
+  [
+    // An array of parameter sets
+    {
+      // (-n) number of processors per server
+      "processor": 96,
+      // (-j) job type count, must be set together with arrivalRate and serverNeeds
+      "jobTypeCnt": 3,
+      // (-l) arrival rates, must be of length jobTypeCnt
+      "arrivalRate": [10, 4, 2],
+      // (-s) server needs, must be of length jobTypeCnt
+      "serverNeeds": [1, 4, 5],
+      // (-r) region count, must be set together with serviceTime
+      "regionCnt": 3,
+      // (-a) mean service time across region
+      "serviceTime": [
+        [1, 2, 3],
+        [2, 1, 4],
+        [3, 4, 1]
+      ]
+    },
+    {
+      // More parameter sets
+    }
+  ]
+  ```
+
+  #### Python scripts
+
+  An example running config files can be found in `scripts/sim.py`.
+
+### Run from command line
+
+  Using default parameters, run 
+  ```bash
+  ./sim
+  ```
+
+#### Command line options
 
 <table>
   <tr>
@@ -72,7 +111,7 @@ Options:
   </tr>
 <table>
 
-Example:
+#### Example
 ```bash
 ./sim -t 10000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross -r 3 -a 1,2,3,2,1,4,3,4,1
 ```

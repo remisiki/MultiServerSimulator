@@ -20,7 +20,7 @@ void freeServer(Server* server) {
 }
 
 uint32_t calcServiceTime(Server* server, Job* job) {
-	uint32_t mean = MEAN_SERVICE_TIME[server->region][job->region];
+	uint32_t mean = MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
 	// Take the ceil of random number to avoid 0 service time
 	uint32_t serviceTime = (uint32_t)ceil(gsl_ran_exponential(RNG, mean));
 	return serviceTime;

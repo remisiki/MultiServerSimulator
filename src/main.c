@@ -19,8 +19,42 @@ uint32_t PROC_CNT;
 uint8_t JOB_TYPE_CNT;
 double* ARRIVAL_RATE;
 uint32_t* SERVER_NEEDS;
+uint32_t REGION_CNT;
+uint32_t* MEAN_SERVICE_TIME;
 
-int main(int argc, char const *argv[]) {
+/**
+* Split a string from source by a delimiter (comma) and store to destination
+* NOTE This function modifies destination array but not source array
+* NOTE Please specify the number of tokens after splitting, it cannot be larger
+* than the actual number. Make sure that destination has enough memory
+* allocated before calling this function. destination can only be an array of
+* uint32_t or double which stores the number converted from splitted string.
+* @param source Source string, does not modify
+* @param destination Destination, a pointer to array of uint32_t or double
+* @param size Number of tokens after splitting
+* @param type Type of destination array. 0 for uint32_t and 1 for double
+*/
+void split(const char* source, void* destination, uint32_t size, uint8_t type) {
+	char* tmp = (char*)malloc((strlen(source)+1)*sizeof(char));
+	strcpy(tmp, source);
+	if (type == 0) {
+		uint32_t* d = (uint32_t*)destination;
+		*d = (uint32_t)atoi(strtok(tmp, ","));
+		for (uint32_t i = 1; i < size; i ++) {
+			*(d+i) = (uint32_t)atoi(strtok(NULL, ","));
+		}
+	} else if (type == 1) {
+		char* eptr;
+		double* d = (double*)destination;
+		*d = strtod(strtok(tmp, ","), &eptr);
+		for (uint32_t i = 1; i < size; i ++) {
+			*(d+i) = strtod(strtok(NULL, ","), &eptr);
+		}
+	}
+	free(tmp);
+}
+
+int main(int argc, const char* argv[]) {
 
 	// Default parameters
 	SIMULATION_TIME = 1E5;
@@ -32,6 +66,12 @@ int main(int argc, char const *argv[]) {
 	SERVER_NEEDS = (uint32_t*)malloc(JOB_TYPE_CNT*sizeof(uint32_t));
 	SERVER_NEEDS[0] = 1;
 	SERVER_NEEDS[1] = 4;
+	REGION_CNT = 2;
+	MEAN_SERVICE_TIME = (uint32_t*)malloc(REGION_CNT*REGION_CNT*sizeof(uint32_t));
+	MEAN_SERVICE_TIME[0] = 1;
+	MEAN_SERVICE_TIME[1] = 2;
+	MEAN_SERVICE_TIME[2] = 2;
+	MEAN_SERVICE_TIME[3] = 1;
 	char POLICY[20] = "fcfsLocal";
 
 	// Parse arguments
@@ -53,24 +93,20 @@ int main(int argc, char const *argv[]) {
 			}
 		} else if (strcmp(argv[i], "-l") == 0) {
 			if (i + 1 < argc) {
-				char* tmp = (char*)malloc((strlen(argv[i+1])+1)*sizeof(char));
-				strcpy(tmp, argv[i+1]);
-				char* eptr;
-				ARRIVAL_RATE[0] = strtod(strtok(tmp, ","), &eptr);
-				for (int j = 1; j < JOB_TYPE_CNT; j ++) {
-					ARRIVAL_RATE[j] = strtod(strtok(NULL, ","), &eptr);
-				}
-				free(tmp);
+				split(argv[i+1], ARRIVAL_RATE, JOB_TYPE_CNT, 1);
 			}
 		} else if (strcmp(argv[i], "-s") == 0) {
 			if (i + 1 < argc) {
-				char* tmp = (char*)malloc((strlen(argv[i+1])+1)*sizeof(char));
-				strcpy(tmp, argv[i+1]);
-				SERVER_NEEDS[0] = (uint32_t)atoi(strtok(tmp, ","));
-				for (int j = 1; j < JOB_TYPE_CNT; j ++) {
-					SERVER_NEEDS[j] = (uint32_t)atoi(strtok(NULL, ","));
-				}
-				free(tmp);
+				split(argv[i+1], SERVER_NEEDS, JOB_TYPE_CNT, 0);
+			}
+		} else if (strcmp(argv[i], "-r") == 0) {
+			if (i + 1 < argc) {
+				REGION_CNT = (uint32_t)atoi(argv[i+1]);
+				MEAN_SERVICE_TIME = (uint32_t*)realloc(MEAN_SERVICE_TIME, REGION_CNT*REGION_CNT*sizeof(uint32_t));
+			}
+		} else if (strcmp(argv[i], "-a") == 0) {
+			if (i + 1 < argc) {
+				split(argv[i+1], MEAN_SERVICE_TIME, REGION_CNT*REGION_CNT, 0);
 			}
 		} else if (strcmp(argv[i], "-p") == 0) {
 			if (i + 1 < argc) {
@@ -85,11 +121,14 @@ int main(int argc, char const *argv[]) {
 			printf("%-20s Specify a simulation iteration of time units. default 100000\n", "-t time");
 			printf("%-20s Specify number of processors for each server to be num. This will force all servers to have the same number. default 48\n", "-n num");
 			printf("%-20s Specify job type count as jobCnt. Must be set before (and together with) -l and -s. default 2\n", "-j jobCnt");
-			printf("%-20s Specify arrival rate. Must be set together with -j. lambda must have size of jobCnt and is separated by a comma (,, with no spaces). default 10,4\n", "-l [lambda...]");
-			printf("%-20s Specify server needs. Must be set together with -j. servers must have size of jobCnt and is separated by a comma (,, with no spaces). default 1,4\n", "-s [servers...]");
+			printf("%-20s Specify arrival rate. Must be set together with -j. lambda must have size of jobCnt and is separated by a comma (`,` with no spaces). default 10,4\n", "-l [lambda...]");
+			printf("%-20s Specify server needs. Must be set together with -j. servers must have size of jobCnt and is separated by a comma (`,` with no spaces). default 1,4\n", "-s [servers...]");
+			printf("%-20s Specify region number as regionCnt. Must be set before (and together with) -a. default 2\n", "-r regionCnt");
+			printf("%-20s Specify mean service time across regions. Must be set together with -r. serviceTime must have size of regionCnt^2 and is separated by a comma (`,` with no spaces). This represents a 2d array in a 1d array format, where the (i*regionCnt+j)th entry means the mean service time for the server in the ith region to serve the job from the jth region. default 1,2,2,1\n", "-a [serviceTime...]");
 			printf("%-20s Run simulation verbosely.\n", "-v");
 			free(ARRIVAL_RATE);
 			free(SERVER_NEEDS);
+			free(MEAN_SERVICE_TIME);
 			return 0;
 		}
 	}
@@ -108,6 +147,11 @@ int main(int argc, char const *argv[]) {
 		printf("Server needs: ");
 		for (uint8_t i = 0; i < JOB_TYPE_CNT; i ++) {
 			printf("%d ", SERVER_NEEDS[i]);
+		}
+		printf("\n");
+		printf("Mean service time across servers: ");
+		for (uint8_t i = 0; i < REGION_CNT*REGION_CNT; i ++) {
+			printf("%d ", MEAN_SERVICE_TIME[i]);
 		}
 		printf("\n");
 		printf("Policy: %s\n", POLICY);
@@ -159,6 +203,7 @@ int main(int argc, char const *argv[]) {
 	gsl_rng_free(RNG);
 	free(ARRIVAL_RATE);
 	free(SERVER_NEEDS);
+	free(MEAN_SERVICE_TIME);
 
 	return 0;
 }

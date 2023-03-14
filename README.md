@@ -11,7 +11,7 @@ This program implements the following policies to simulate job queueing through 
 
 `gsl>=2.7`
 
-CPU architecture must be x86_64 to use `immintrin.h`
+CPU architecture must be x86\_64 to use `immintrin.h`
 
 ## Build
 
@@ -52,11 +52,19 @@ Options:
   </tr>
   <tr>
     <td><code>-l [lambda...]</code></td>
-    <td>Specify arrival rate. Must be set together with <code>-j</code>. <code>lambda</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code>, with no spaces). default <code>10,4</code></td>
+    <td>Specify arrival rate. Must be set together with <code>-j</code>. <code>lambda</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code> with no spaces). default <code>10,4</code></td>
   </tr>
   <tr>
     <td><code>-s [servers...]</code></td>
-    <td>Specify server needs. Must be set together with <code>-j</code>. <code>servers</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code>, with no spaces). default <code>1,4</code></td>
+    <td>Specify server needs. Must be set together with <code>-j</code>. <code>servers</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code> with no spaces). default <code>1,4</code></td>
+  </tr>
+  <tr>
+    <td><code>-r regionCnt</code></td>
+    <td>Specify region number as <code>regionCnt</code>. Must be set before (and together with) <code>-a</code>. default <code>2</code></td>
+  </tr>
+  <tr>
+    <td><code>-a [serviceTime...]</code></td>
+    <td>Specify mean service time across regions. Must be set together with <code>-r</code>. <code>serviceTime</code> must have size of <code>regionCnt^2</code> and is separated by a comma (<code>,</code> with no spaces). This represents a 2d array in a 1d array format, where the <code>i*regionCnt+j</code>th entry means the mean service time for the server in the <code>i</code>th region to serve the job from the <code>j</code>th region. default <code>1,2,2,1</code></td>
   </tr>
   <tr>
     <td><code>-v</code></td>
@@ -66,7 +74,5 @@ Options:
 
 Example:
 ```bash
-./sim -t 100000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross
+./sim -t 10000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross -r 3 -a 1,2,3,2,1,4,3,4,1
 ```
-
-To modify server (or region) numbers and mean service time cross regions, go to `region.c` and change the values according to `region.h`. This paramemter is hardcoded, may consider a better way to parse it.

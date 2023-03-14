@@ -83,7 +83,7 @@ int getBestRegion(Server** servers, Job* job) {
 		uint32_t minServiceTime = UINT32_MAX;
 		for (uint32_t j = 0; j < REGION_CNT; j ++) {
 			Server* server = servers[j];
-			uint32_t serviceTime = MEAN_SERVICE_TIME[server->region][job->region];
+			uint32_t serviceTime = MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
 			if (
 				(canServe(server, job)) &&
 				(serviceTime < minServiceTime)

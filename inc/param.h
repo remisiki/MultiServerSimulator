@@ -34,4 +34,8 @@ extern double* ARRIVAL_RATE;
 // Must have size of JOB_TYPE_CNT. Adjust according to PROC_CNT.
 extern uint32_t* SERVER_NEEDS;
 
+extern uint32_t REGION_CNT;
+
+extern uint32_t* MEAN_SERVICE_TIME;
+
 #endif

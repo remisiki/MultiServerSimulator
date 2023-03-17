@@ -21,8 +21,7 @@ void freeServer(Server* server) {
 
 uint32_t calcServiceTime(Server* server, Job* job) {
 	uint32_t mean = MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
-	// Take the ceil of random number to avoid 0 service time
-	uint32_t serviceTime = (uint32_t)ceil(gsl_ran_exponential(RNG, mean));
+	uint32_t serviceTime = (uint32_t)floor(gsl_ran_exponential(RNG, mean));
 	return serviceTime;
 }
 
@@ -51,7 +50,10 @@ void serveJobs(Server* server) {
 	uint32_t newJobCnt = 0;
 	for (uint32_t i = 0; i < server->jobBuffer.jobCnt; i ++) {
 		Job* job = server->jobBuffer.jobs[i];
-		job->timeToFinish --;
+		if (job->timeToFinish > 0) {
+			// Ignore when timeToFinish is already zero
+			job->timeToFinish --;
+		}
 		if (job->timeToFinish > 0) {
 			newJobs[newJobCnt] = job;
 			newJobCnt ++;

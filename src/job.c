@@ -8,7 +8,7 @@ JobBuffer newJobs() {
 	Job** jobs = (Job**)malloc(jobCnt);
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {
 		for (uint8_t j = 0; j < JOB_TYPE_CNT; j ++) {
-			uint32_t arrivingCnt = gsl_ran_poisson(RNG, ARRIVAL_RATE[j]);
+			uint32_t arrivingCnt = gsl_ran_poisson(RNG, ARRIVAL_RATE[JOB_TYPE_CNT*i+j]);
 			jobs = (Job**)realloc(jobs, (jobCnt+arrivingCnt)*sizeof(Job*));
 			for (uint32_t k = 0; k < arrivingCnt; k ++) {
 				Job* job = (Job*)malloc(sizeof(Job));

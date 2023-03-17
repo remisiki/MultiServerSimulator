@@ -16,7 +16,7 @@ class Config:
     iteration: int = None,
     processorCnt: int = None,
     jobTypeCnt: int = None,
-    arrivalRate: List[int] = None,
+    arrivalRate: List[List[int]] = None,
     serverNeeds: List[int] = None,
     regionCnt: int = None,
     serviceTime: List[List[int]] = None
@@ -29,11 +29,15 @@ class Config:
       ((jobTypeCnt is None) and (arrivalRate is None) and (serverNeeds is None))
     )):
       raise Exception("arrivalRate and serverNeeds should be set together with jobTypeCnt")
-    elif (
-      ((arrivalRate is not None) and (len(arrivalRate) != jobTypeCnt)) or
-      ((serverNeeds is not None) and (len(serverNeeds) != jobTypeCnt))
-    ):
-      raise Exception("arrivalRate and serverNeeds should be of length jobTypeCnt")
+    elif ((serverNeeds is not None) and (len(serverNeeds) != jobTypeCnt)):
+      raise Exception("serverNeeds should be of length jobTypeCnt")
+    elif (arrivalRate is not None):
+      arrivalRate = [x for row in arrivalRate for x in row]
+      if (
+        ((regionCnt is None) and (len(arrivalRate) != 2*jobTypeCnt)) or
+        ((regionCnt is not None) and (len(arrivalRate) != regionCnt*jobTypeCnt))
+      ):
+        raise Exception("arrivalRate should be of shape (regionCnt,jobTypeCnt)")
     self.jobTypeCnt = jobTypeCnt
     self.arrivalRate = arrivalRate
     self.serverNeeds = serverNeeds
@@ -57,13 +61,13 @@ class Config:
       opts += " -p %s" % self.policy
     if (self.iteration is not None):
       opts += " -t %d" % self.iteration
+    if (self.regionCnt is not None):
+      serviceTime = ",".join([str(x) for x in self.serviceTime])
+      opts += " -r %d -a %s" % (self.regionCnt, serviceTime)
     if (self.jobTypeCnt is not None):
       arrivalRate = ",".join([str(x) for x in self.arrivalRate])
       serverNeeds = ",".join([str(x) for x in self.serverNeeds])
       opts += " -j %d -l %s -s %s" % (self.jobTypeCnt, arrivalRate, serverNeeds)
-    if (self.regionCnt is not None):
-      serviceTime = ",".join([str(x) for x in self.serviceTime])
-      opts += " -r %d -a %s" % (self.regionCnt, serviceTime)
     return opts
 
 def plot(
@@ -131,7 +135,7 @@ def test2():
   for policy in policies:
     configs = []
     for l in arrivalRates:
-      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[l, 4], serverNeeds=[1, 4])
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[[l, 4], [l, 4]], serverNeeds=[1, 4])
       configs.append(config)
     datas.append(runSim(configs))
   return arrivalRates, datas
@@ -142,7 +146,7 @@ def test3():
   for policy in policies:
     configs = []
     for l in arrivalRates:
-      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[10, l], serverNeeds=[1, 4])
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[[10, l], [10, l]], serverNeeds=[1, 4])
       configs.append(config)
     datas.append(runSim(configs))
   return arrivalRates, datas
@@ -213,9 +217,20 @@ def test8():
     datas.append(runSim(configs))
   return loads, datas
 
+def test9():
+  arrivalRates = list(range(10, 31, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for l in arrivalRates:
+      config = Config(policy=policy, iteration=1000, processorCnt=100, jobTypeCnt=2, arrivalRate=[[10, 10], [l, 5]], serverNeeds=[1, 7])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return arrivalRates, datas
+
 def main():
-  x, ys = test8()
-  plot(x, ys, legends=policies, fileName="img/load.png", xLabel="Load")
+  x, ys = test9()
+  plot(x, ys, legends=policies, fileName="img/inbalancedArrivalRate.png", xLabel="Arrival rate of small jobs")
 
 if (__name__ == "__main__"):
   main()

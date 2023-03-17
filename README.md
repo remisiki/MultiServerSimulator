@@ -58,7 +58,7 @@ make
   </tr>
   <tr>
     <td><code>-l [lambda...]</code></td>
-    <td>Specify arrival rate. Must be set together with <code>-j</code>. <code>lambda</code> must have size of <code>jobCnt</code> and is separated by a comma (<code>,</code> with no spaces). default <code>10,4</code></td>
+    <td>Specify arrival rate. Must be set together with <code>-j</code>. <code>lambda</code> must have size of <code>regionCnt*jobCnt</code> and is separated by a comma (<code>,</code> with no spaces). This represents a 2d array in a 1d array format, where the <code>i*regionCnt+j</code>th entry means the arrival rate of job type <code>j</code> for the server in the <code>i</code>th region. default <code>10,4,10,4</code></td>
   </tr>
   <tr>
     <td><code>-s [servers...]</code></td>
@@ -66,7 +66,7 @@ make
   </tr>
   <tr>
     <td><code>-r regionCnt</code></td>
-    <td>Specify region number as <code>regionCnt</code>. Must be set before (and together with) <code>-a</code>. default <code>2</code></td>
+    <td>Specify region number as <code>regionCnt</code>. Must be set before (and together with) <code>-a</code>. Must be set before <code>-l</code>. default <code>2</code></td>
   </tr>
   <tr>
     <td><code>-a [serviceTime...]</code></td>
@@ -80,5 +80,5 @@ make
 
 #### Example
 ```bash
-./sim -t 10000 -n 96 -j 3 -l 10,4,2 -s 1,4,10 -v -p fcfsCross -r 3 -a 1,2,3,2,1,4,3,4,1
+./sim -t 10000 -n 96 -j 3 -l 10,4,2,3,2,1,30,5,1 -s 1,4,10 -v -p fcfsCross -r 3 -a 1,2,3,2,1,4,3,4,1
 ```

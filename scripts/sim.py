@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import matplotlib.pyplot as plt
+import numpy as np
 from typing import *
 
 class Config:
@@ -103,7 +104,9 @@ def runSim(configs: List[Config]) -> List[float]:
       data.append(float(output))
   return data
 
-def main():
+policies = ["fcfsLocal", "fcfsCross", "fcfsCrossPart", "o3CrossPart"]
+
+def test1():
   # NOTE When choosing parameters, always choose carefully and start from
   # testing one config with small values (big values for processorCnt).
   # Escpecially for serviceNeeds, the simulation time will blow up very fast
@@ -111,7 +114,6 @@ def main():
   # -v option to see the iteration speed.
   # Here is an example to test four policies, each over different processor
   # numbers {28, 32, 36, ..., 64}.
-  policies = ["fcfsLocal", "fcfsCross", "fcfsCrossPart", "o3CrossPart"]
   processorCnts = list(range(28, 65, 4))
   datas = []
   for policy in policies:
@@ -121,9 +123,99 @@ def main():
       config = Config(processorCnt=n, policy=policy, iteration=1000)
       configs.append(config)
     datas.append(runSim(configs))
-  # TODO Not sure how to represent parameters that are arrays (like server
-  # needs), just put set number here that needs to be explained explicitly.
-  plot(range(len(processorCnts)), datas, legends=policies, fileName="processorCnt.png")
+  return processorCnts, datas
+
+def test2():
+  arrivalRates = list(range(1, 21, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for l in arrivalRates:
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[l, 4], serverNeeds=[1, 4])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return arrivalRates, datas
+
+def test3():
+  arrivalRates = list(range(1, 10, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for l in arrivalRates:
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[10, l], serverNeeds=[1, 4])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return arrivalRates, datas
+
+def test4():
+  serverNeeds = list(range(1, 4, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for s in serverNeeds:
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[10, 4], serverNeeds=[s, 4])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return serverNeeds, datas
+
+def test5():
+  serverNeeds = list(range(2, 5, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for s in serverNeeds:
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[10, 4], serverNeeds=[1, s])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return serverNeeds, datas
+
+def test6():
+  serviceTimes = list(range(2, 11, 1))
+  datas = []
+  for policy in policies:
+    configs = []
+    for a in serviceTimes:
+      config = Config(policy=policy, iteration=1000, regionCnt=2, serviceTime=[[1, a], [a, 1]])
+      configs.append(config)
+    datas.append(runSim(configs))
+  return serviceTimes, datas
+
+def test7():
+  regionCnts = list(range(2, 15, 2))
+  datas = []
+  for policy in policies:
+    configs = []
+    for r in regionCnts:
+      m = [[4]*r for i in range(r)]
+      for i in range(r):
+        m[i][i] = 1
+      config = Config(policy=policy, iteration=1000, regionCnt=r, serviceTime=m)
+      configs.append(config)
+    datas.append(runSim(configs))
+  return regionCnts, datas
+
+def test8():
+  loads = np.linspace(0.1, 0.99, 10).tolist()
+  datas = []
+  for policy in policies:
+    configs = []
+    for load in loads:
+      arrivalRate = [10, 4]
+      arrivalRate[1] = np.random.randint(1, 6)
+      arrivalRate[0] = np.random.randint(arrivalRate[1], 20)
+      serverNeeds = [1, 4]
+      serverNeeds[0] = np.random.randint(1, 3)
+      serverNeeds[1] = np.random.randint(serverNeeds[0]+1, 5)
+      minNeed = arrivalRate[0]*serverNeeds[0] + arrivalRate[1]*serverNeeds[1]
+      processorCnt = int(minNeed*load)
+      config = Config(policy=policy, iteration=1000, processorCnt=processorCnt, jobTypeCnt=2, arrivalRate=arrivalRate, serverNeeds=serverNeeds)
+      configs.append(config)
+    datas.append(runSim(configs))
+  return loads, datas
+
+def main():
+  x, ys = test8()
+  plot(x, ys, legends=policies, fileName="img/load.png", xLabel="Load")
 
 if (__name__ == "__main__"):
   main()

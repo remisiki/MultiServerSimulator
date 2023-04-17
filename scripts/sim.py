@@ -105,7 +105,7 @@ def runSim(configs: List[Config]) -> List[float]:
     if (process.returncode != 0):
       raise Exception("Error executing command `%s`" % command)
     else:
-      data.append(float(output))
+      data.append([float(x) for x in output.split()])
   return data
 
 policies = ["fcfsLocal", "fcfsCross", "fcfsCrossPart", "o3CrossPart"]
@@ -163,12 +163,12 @@ def test4():
   return serverNeeds, datas
 
 def test5():
-  serverNeeds = list(range(2, 5, 1))
+  serverNeeds = list(range(1, 6, 1))
   datas = []
   for policy in policies:
     configs = []
     for s in serverNeeds:
-      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[10, 4], serverNeeds=[1, s])
+      config = Config(policy=policy, iteration=1000, jobTypeCnt=2, arrivalRate=[[10, 10], [5, 5]], serverNeeds=[s, 5], processorCnt=100)
       configs.append(config)
     datas.append(runSim(configs))
   return serverNeeds, datas
@@ -218,19 +218,22 @@ def test8():
   return loads, datas
 
 def test9():
-  arrivalRates = list(range(10, 31, 1))
+  arrivalRates = list(range(5, 21, 1))
   datas = []
   for policy in policies:
     configs = []
     for l in arrivalRates:
-      config = Config(policy=policy, iteration=1000, processorCnt=100, jobTypeCnt=2, arrivalRate=[[10, 10], [l, 5]], serverNeeds=[1, 7])
+      config = Config(policy=policy, iteration=1000, processorCnt=100, jobTypeCnt=2, arrivalRate=[[l, 10], [5, 5]], serverNeeds=[1, 9])
       configs.append(config)
     datas.append(runSim(configs))
   return arrivalRates, datas
 
 def main():
-  x, ys = test9()
-  plot(x, ys, legends=policies, fileName="img/inbalancedArrivalRate.png", xLabel="Arrival rate of small jobs")
+  x, ys = test5()
+  queueLength = [[j[0] for j in i] for i in ys]
+  queueDelay = [[j[1] for j in i] for i in ys]
+  plot(x, queueLength, legends=policies, fileName="img/test0.png", xLabel="Server needs of small jobs $m_s$", title="")
+  plot(x, queueDelay, legends=policies, fileName="img/test1.png", xLabel="Server needs of small jobs $m_s$", title="", yLabel="Mean Queueing Delay")
 
 if (__name__ == "__main__"):
   main()

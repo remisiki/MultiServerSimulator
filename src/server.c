@@ -10,6 +10,8 @@ Server* newServer(uint32_t region, uint32_t processorCnt) {
 	Job** jobs = (Job**)malloc(INIT_JOB_BUFFER_SIZE*sizeof(Job*));
 	JobBuffer jobBuffer = {jobs, 0, INIT_JOB_BUFFER_SIZE};
 	server->jobBuffer = jobBuffer;
+	server->departedJobCnt = 0;
+	server->departedJobDelay = 0;
 	return server;
 }
 
@@ -28,6 +30,8 @@ uint32_t calcServiceTime(Server* server, Job* job) {
 void assignJobToServer(Server* server, Job* job) {
 	job->timeToFinish = calcServiceTime(server, job);
 	server->jobBuffer.jobCnt ++;
+	server->departedJobCnt ++;
+	server->departedJobDelay += job->waitTime;
 	if (server->jobBuffer.jobCnt > server->jobBuffer.size) {
 		if (server->jobBuffer.size == 0) {
 			// If is empty, assign init size
@@ -68,6 +72,10 @@ void serveJobs(Server* server) {
 	free(server->jobBuffer.jobs);
 	server->jobBuffer.jobs = newJobs;
 	server->jobBuffer.jobCnt = newJobCnt;
+	// Walk through the queue and increment job delay by 1
+	for (Node* pos = server->waitingQueue->head; pos != NULL; pos = pos->next) {
+		pos->job->waitTime ++;
+	}
 }
 
 uint8_t canServe(Server* server, Job* job) {

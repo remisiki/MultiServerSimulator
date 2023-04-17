@@ -19,6 +19,8 @@
 * @param idleCnt an integer that tells count of idle processors
 * @param waitingQueue a queue that includes jobs waiting to be serverd
 * @param jobBuffer a job buffer for all jobs that are being served
+* @param departedJobCnt number of jobs that already departed
+* @param departedJobDelay sum of delay (wait time) for all departed jobs
 */
 typedef struct Server {
 	uint32_t region;
@@ -26,6 +28,8 @@ typedef struct Server {
 	uint32_t idleCnt;
 	Queue* waitingQueue;
 	JobBuffer jobBuffer;
+	uint32_t departedJobCnt;
+	uint32_t departedJobDelay;
 } Server;
 
 /**
@@ -45,14 +49,15 @@ void freeServer(Server* server);
 * Assign a job to the server
 * This force the server serve the job by adding it to the jobBuffer, do not
 * call if server has not enough idle processors but add it to the waiting queue
-* instead.
+* instead. Job is considered departed after assigned to a server.
 */
 void assignJobToServer(Server* server, Job* job);
 
 /**
 * Serve ongoing jobs for one time unit
-* This function only take affects on job buffer and not considering waiting
-* queue. Finished jobs will be eliminated and freed.
+* This function reduce timeToFinish of jobs from job buffer by 1, and increment
+* waitTime of jobs from waiting queue. Finished jobs will be eliminated and
+* freed.
 */
 void serveJobs(Server* server);
 

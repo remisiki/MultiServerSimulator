@@ -188,14 +188,25 @@ int main(int argc, const char* argv[]) {
 		expectedQueueLength += schedule(servers, POLICY);
 	}
 	expectedQueueLength /= (SIMULATION_TIME*REGION_CNT);
+	// For the queueing delay metric, only count jobs that already departed,
+	// since those still in the queue have unknown final waitTime.
+	uint32_t sumDepartedJobCnt = 0;
+	uint32_t sumDepartedJobDelay = 0;
+	for (uint32_t i = 0; i < REGION_CNT; i ++) {
+		sumDepartedJobCnt += servers[i]->departedJobCnt;
+		sumDepartedJobDelay += servers[i]->departedJobDelay;
+	}
+	double expectedJobDelay = (double)sumDepartedJobDelay/sumDepartedJobCnt;
 	if (verbose) {
 		printf("\n");
 		printf("Stop simulation\n");
 	}
 	if (verbose) {
 		printf("Expected queue length: %lf\n", expectedQueueLength);
+		printf("Expected queueing delay: %lf\n", expectedJobDelay);
 	} else {
 		printf("%lf\n", expectedQueueLength);
+		printf("%lf\n", expectedJobDelay);
 	}
 
 	// Cleanup

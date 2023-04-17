@@ -17,11 +17,13 @@ extern const uint32_t INIT_JOB_BUFFER_SIZE;
 * @param jobType an integer in [0, JOB_TYPE_CNT) defined in param.h
 * @param region an integer in [0, REGION_CNT) defined in param.h
 * @param timeToFinish an integer telling remaining time to finish the job
+* @param waitTime an integer telling time this job already waited
 */
 typedef struct Job {
 	uint8_t jobType;
 	uint32_t region;
 	uint32_t timeToFinish;
+	uint32_t waitTime;
 } Job;
 
 /**

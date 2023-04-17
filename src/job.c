@@ -14,6 +14,7 @@ JobBuffer newJobs() {
 				Job* job = (Job*)malloc(sizeof(Job));
 				job->jobType = j;
 				job->region = i;
+				job->waitTime = 0;
 				jobs[jobCnt+k] = job;
 			}
 			jobCnt += arrivingCnt;

@@ -263,21 +263,21 @@ void jsqMaxweight(Server** servers, Queue* commonQueue) {
 	// MaxWeight scheduling
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {
 		Server* server = servers[i];
-		Node* localPos = server->waitingQueue->head;
-		Node* commonPos = commonQueue->head;
 		// Loop through two queues simultaneously
-		while (!((localPos == NULL) && (commonPos == NULL))) {
+		while (!(queueIsEmpty(server->waitingQueue) && (queueIsEmpty(commonQueue)))) {
+			Node* localHead = server->waitingQueue->head;
+			Node* commonHead = commonQueue->head;
 			double localWeight = 0;
 			double commonWeight = 0;
-			if (localPos != NULL) {
-				localWeight = (double)getQueueSize(server->waitingQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+localPos->job->region];
+			if (localHead != NULL) {
+				localWeight = (double)getQueueSize(server->waitingQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+localHead->job->region];
 			}
-			if (commonPos != NULL) {
-				commonWeight = (double)getQueueSize(commonQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+commonPos->job->region];
+			if (commonHead != NULL) {
+				commonWeight = (double)getQueueSize(commonQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+commonHead->job->region];
 			}
 			// Select the job that has a larger weight
 			uint8_t serveLocalJob = (localWeight >= commonWeight);
-			Job* job = serveLocalJob ? localPos->job : commonPos->job;
+			Job* job = serveLocalJob ? localHead->job : commonHead->job;
 			Queue* queue = serveLocalJob ? server->waitingQueue : commonQueue;
 			if (canServe(server, job)) {
 				assignJobToServer(server, job);
@@ -286,8 +286,6 @@ void jsqMaxweight(Server** servers, Queue* commonQueue) {
 				// Block the queue
 				break;
 			}
-			localPos = server->waitingQueue->head;
-			commonPos = commonQueue->head;
 		}
 	}
 }

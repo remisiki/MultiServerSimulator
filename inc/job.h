@@ -5,8 +5,9 @@
 #ifndef _JOB_H
 #define _JOB_H
 
-#include <stdint.h>
 #include <gsl/gsl_randist.h>
+#include <math.h>
+#include <stdint.h>
 #include "param.h"
 
 // Initial job buffer allocation size

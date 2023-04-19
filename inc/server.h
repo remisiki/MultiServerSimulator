@@ -6,8 +6,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <gsl/gsl_randist.h>
-#include <math.h>
 #include "queue.h"
 #include "job.h"
 #include "param.h"

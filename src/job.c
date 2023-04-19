@@ -15,6 +15,9 @@ JobBuffer newJobs() {
 				job->jobType = j;
 				job->region = i;
 				job->waitTime = 0;
+				uint32_t mean = MEAN_SERVICE_TIME[job->region*REGION_CNT+job->region];
+				uint32_t serviceTime = (uint32_t)floor(gsl_ran_exponential(RNG, mean));
+				job->timeToFinish = serviceTime;
 				jobs[jobCnt+k] = job;
 			}
 			jobCnt += arrivingCnt;

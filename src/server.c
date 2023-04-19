@@ -21,14 +21,9 @@ void freeServer(Server* server) {
 	free(server);
 }
 
-uint32_t calcServiceTime(Server* server, Job* job) {
-	uint32_t mean = MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
-	uint32_t serviceTime = (uint32_t)floor(gsl_ran_exponential(RNG, mean));
-	return serviceTime;
-}
-
 void assignJobToServer(Server* server, Job* job) {
-	job->timeToFinish = calcServiceTime(server, job);
+	// Decay service rate (increase service time)
+	job->timeToFinish *= MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
 	server->jobBuffer.jobCnt ++;
 	server->departedJobCnt ++;
 	server->departedJobDelay += job->waitTime;

@@ -10,6 +10,8 @@
 * - o3CrossPart: Out Of Order, only small jobs may be served at a remote server
 *   if current region is congested and smaller jobs coming late may get served
 *   first
+* - jsqMaxweight: Proposed in Weina et al. 2016. Push job to join the shortest
+*   queue and use Max Weight algorithm to schedule which queue to serve.
 */
 #ifndef _POLICY_H
 #define _POLICY_H
@@ -27,7 +29,9 @@
 /**
 * Schedule servers according to policy, returns a sum of queueing length in one
 * time unit (of all regions).
+* @param commonQueue Maintain a common queue for all servers. This is for
+* jsqMaxweight, keep it null for other policies.
 */
-uint32_t schedule(Server** servers, const char* policy);
+uint32_t schedule(Server** servers, const char* policy, Queue* commonQueue);
 
 #endif

@@ -6,6 +6,7 @@ This program implements the following policies to simulate job queueing through 
 - fcfsCross: First Come First Serve, all jobs may be served at a remote server if current region is congested
 - fcfsCrossPart: First Come First Serve, only small jobs may be served at a remote server if current region is congested
 - o3CrossPart: Out Of Order, only small jobs may be served at a remote server if current region is congested and smaller jobs coming late may get served first
+- jsqMaxweight: Proposed in [Weina et al. 2016](https://ieeexplore.ieee.org/document/6566957). Push job to join the shortest queue and use Max Weight algorithm to schedule which queue to serve.
 
 ## Requirements
 
@@ -43,7 +44,7 @@ make
   <tr>
   <tr>
     <td><code>-p</code></td>
-    <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>, <code>o3CrossPart</code>. default <code>fcfsLocal</code></td>
+    <td>Specify policy from <code>fcfsLocal</code>, <code>fcfsCross</code>, <code>fcfsCrossPart</code>, <code>o3CrossPart</code>, <code>jsqMaxweight</code>. default <code>fcfsLocal</code></td>
   </tr>
     <td><code>-t time</code></td>
     <td>Specify a simulation iteration of <code>time</code> units. default <code>100000</code></td>

@@ -120,7 +120,7 @@ int main(int argc, const char* argv[]) {
 		} else if (strcmp(argv[i], "-h") == 0) {
 			printf("MultiServerSimulator\nOptions:\n");
 			printf("%-20s Show this help message.\n", "-h");
-			printf("%-20s Specify policy from fcfsLocal, fcfsCross, fcfsCrossPart, o3CrossPart. default fcfsLocal\n", "-p");
+			printf("%-20s Specify policy from fcfsLocal, fcfsCross, fcfsCrossPart, o3CrossPart, jsqMaxweight. default fcfsLocal\n", "-p");
 			printf("%-20s Specify a simulation iteration of time units. default 100000\n", "-t time");
 			printf("%-20s Specify number of processors for each server to be num. This will force all servers to have the same number. default 48\n", "-n num");
 			printf("%-20s Specify job type count as jobCnt. Must be set before (and together with) -l and -s. default 2\n", "-j jobCnt");
@@ -183,9 +183,14 @@ int main(int argc, const char* argv[]) {
 	}
 	// Simulate by time units
 	double expectedQueueLength = 0;
+	Queue* commonQueue = newQueue();
 	for (uint32_t timestamp = 0; timestamp < SIMULATION_TIME; timestamp ++) {
 		if (verbose) printf("%d/%d\r", timestamp+1, SIMULATION_TIME);
-		expectedQueueLength += schedule(servers, POLICY);
+		if (strcmp(POLICY, "jsqMaxweight") == 0) {
+			expectedQueueLength += schedule(servers, POLICY, commonQueue);
+		} else {
+			expectedQueueLength += schedule(servers, POLICY, NULL);
+		}
 	}
 	expectedQueueLength /= (SIMULATION_TIME*REGION_CNT);
 	// For the queueing delay metric, only count jobs that already departed,
@@ -210,6 +215,7 @@ int main(int argc, const char* argv[]) {
 	}
 
 	// Cleanup
+	freeQueue(commonQueue);
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {
 		freeServer(servers[i]);
 	}

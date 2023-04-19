@@ -3,9 +3,6 @@
 * Uncomment printf lines to see verbose results, only do this on small
 * simulation iterations. Using gdb is better, but printf is just simple and
 * fast.
-* TODO Why fcfsCross and fcfsCrossPart performs much worse? MEAN_SERVICE_TIME
-* matters a lot.
-* TODO Add mean waiting time to the return value
 */
 #include "policy.h"
 
@@ -17,7 +14,9 @@ void fcfsCrossPart(Server**);
 
 void o3CrossPart(Server**);
 
-uint32_t schedule(Server** servers, const char* policy) {
+void jsqMaxweight(Server**, Queue*);
+
+uint32_t schedule(Server** servers, const char* policy, Queue* commonQueue) {
 	uint32_t sumQueueLength = 0;
 	if (strcmp(policy, "fcfsLocal") == 0) {
 		fcfsLocal(servers);
@@ -27,6 +26,8 @@ uint32_t schedule(Server** servers, const char* policy) {
 		fcfsCrossPart(servers);
 	} else if (strcmp(policy, "o3CrossPart") == 0) {
 		o3CrossPart(servers);
+	} else if (strcmp(policy, "jsqMaxweight") == 0) {
+		jsqMaxweight(servers, commonQueue);
 	}
 	// Serve all jobs in the processors for one time unit and record queue length
 	for (uint32_t i = 0; i < REGION_CNT; i ++) {
@@ -245,4 +246,48 @@ void o3CrossPart(Server** servers) {
 		}
 	}
 	free(jobBuffer.jobs);
+}
+
+void jsqMaxweight(Server** servers, Queue* commonQueue) {
+	// JSQ routing
+	JobBuffer jobBuffer = newJobs();
+	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
+		Job* job = jobBuffer.jobs[i];
+		if (getQueueSize(servers[job->region]->waitingQueue) <= getQueueSize(commonQueue)) {
+			pushQueue(servers[job->region]->waitingQueue, job);
+		} else {
+			pushQueue(commonQueue, job);
+		}
+	}
+	free(jobBuffer.jobs);
+	// MaxWeight scheduling
+	for (uint32_t i = 0; i < REGION_CNT; i ++) {
+		Server* server = servers[i];
+		Node* localPos = server->waitingQueue->head;
+		Node* commonPos = commonQueue->head;
+		// Loop through two queues simultaneously
+		while (!((localPos == NULL) && (commonPos == NULL))) {
+			double localWeight = 0;
+			double commonWeight = 0;
+			if (localPos != NULL) {
+				localWeight = (double)getQueueSize(server->waitingQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+localPos->job->region];
+			}
+			if (commonPos != NULL) {
+				commonWeight = (double)getQueueSize(commonQueue)/MEAN_SERVICE_TIME[server->region*REGION_CNT+commonPos->job->region];
+			}
+			// Select the job that has a larger weight
+			uint8_t serveLocalJob = (localWeight >= commonWeight);
+			Job* job = serveLocalJob ? localPos->job : commonPos->job;
+			Queue* queue = serveLocalJob ? server->waitingQueue : commonQueue;
+			if (canServe(server, job)) {
+				assignJobToServer(server, job);
+				popQueue(queue);
+			} else {
+				// Block the queue
+				break;
+			}
+			localPos = server->waitingQueue->head;
+			commonPos = commonQueue->head;
+		}
+	}
 }

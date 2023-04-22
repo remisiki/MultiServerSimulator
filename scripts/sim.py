@@ -108,7 +108,7 @@ def runSim(configs: List[Config]) -> List[float]:
       data.append([float(x) for x in output.split()])
   return data
 
-policies = ["fcfsLocal", "fcfsCross", "fcfsCrossPart", "o3CrossPart"]
+policies = ["fcfsLocal", "fcfsCross", "fcfsCrossPart", "o3CrossPart", "jsq", "jsqPart", "jsqMaxweight"]
 
 def test1():
   # NOTE When choosing parameters, always choose carefully and start from
@@ -174,12 +174,12 @@ def test5():
   return serverNeeds, datas
 
 def test6():
-  serviceTimes = list(range(2, 11, 1))
+  serviceTimes = list(range(2, 15, 2))
   datas = []
   for policy in policies:
     configs = []
     for a in serviceTimes:
-      config = Config(policy=policy, iteration=1000, regionCnt=2, serviceTime=[[1, a], [a, 1]])
+      config = Config(policy=policy, iteration=1000, regionCnt=2, serviceTime=[[1, a], [a, 1]], processorCnt=150, jobTypeCnt=2, arrivalRate=[[130, 10], [1, 1]], serverNeeds=[1, 9])
       configs.append(config)
     datas.append(runSim(configs))
   return serviceTimes, datas
@@ -218,22 +218,28 @@ def test8():
   return loads, datas
 
 def test9():
-  arrivalRates = list(range(5, 21, 1))
+  # arrivalRates = list(range(50, 211, 20))
+  # arrivalRates = list(range(60, 100, 4))
+  # arrivalRates = list(range(10, 33, 2))
+  # arrivalRates = list(range(10, 61, 10))
+  arrivalRates = list(range(1, 14, 2))
   datas = []
   for policy in policies:
     configs = []
     for l in arrivalRates:
-      config = Config(policy=policy, iteration=1000, processorCnt=100, jobTypeCnt=2, arrivalRate=[[l, 10], [5, 5]], serverNeeds=[1, 9])
+      # config = Config(policy=policy, iteration=1000, processorCnt=150, jobTypeCnt=2, arrivalRate=[[l, 10], [1, 1]], serverNeeds=[1, 9])
+      # config = Config(policy=policy, iteration=1000, processorCnt=150, jobTypeCnt=2, arrivalRate=[[30, l], [1, 1]], serverNeeds=[1, 9])
+      config = Config(policy=policy, iteration=1000, processorCnt=150, jobTypeCnt=2, arrivalRate=[[80, 10], [1, l]], serverNeeds=[1, 9])
       configs.append(config)
     datas.append(runSim(configs))
   return arrivalRates, datas
 
 def main():
-  x, ys = test5()
+  x, ys = test9()
   queueLength = [[j[0] for j in i] for i in ys]
   queueDelay = [[j[1] for j in i] for i in ys]
-  plot(x, queueLength, legends=policies, fileName="img/test0.png", xLabel="Server needs of small jobs $m_s$", title="")
-  plot(x, queueDelay, legends=policies, fileName="img/test1.png", xLabel="Server needs of small jobs $m_s$", title="", yLabel="Mean Queueing Delay")
+  plot(x, queueLength, legends=policies, fileName="img/test0.png", xLabel="Arrival rate of large jobs $\\lambda_l$", title="")
+  plot(x, queueDelay, legends=policies, fileName="img/test1.png", xLabel="Arrival rate of large jobs $\\lambda_l$", title="", yLabel="Average Queueing Delay")
 
 if (__name__ == "__main__"):
   main()

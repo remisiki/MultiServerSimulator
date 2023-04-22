@@ -78,3 +78,21 @@ uint8_t canServe(Server* server, Job* job) {
 	if (job != NULL) jobType = job->jobType;
 	return (server->idleCnt >= SERVER_NEEDS[jobType]);
 }
+
+/**
+* Calculate virtual size of a single job
+*/
+uint32_t calcVirtualQueueSize(Server* server, Job* job) {
+	return SERVER_NEEDS[job->jobType]*MEAN_SERVICE_TIME[server->region*REGION_CNT+job->region];
+}
+
+void pushQueueVirtual(Server* server, Job* job) {
+	pushQueue(server->waitingQueue, job);
+	server->waitingQueue->virtualSize += calcVirtualQueueSize(server, job);
+}
+
+void removeQueueVirtual(Server* server, Node* node) {
+	server->waitingQueue->virtualSize -= calcVirtualQueueSize(server, node->job);
+	removeQueue(server->waitingQueue, node);
+}
+

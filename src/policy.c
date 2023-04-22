@@ -14,6 +14,10 @@ void fcfsCrossPart(Server**);
 
 void o3CrossPart(Server**);
 
+void jsq(Server**);
+
+void jsqPart(Server**);
+
 void jsqMaxweight(Server**, Queue*);
 
 uint32_t schedule(Server** servers, const char* policy, Queue* commonQueue) {
@@ -26,6 +30,10 @@ uint32_t schedule(Server** servers, const char* policy, Queue* commonQueue) {
 		fcfsCrossPart(servers);
 	} else if (strcmp(policy, "o3CrossPart") == 0) {
 		o3CrossPart(servers);
+	} else if (strcmp(policy, "jsq") == 0) {
+		jsq(servers);
+	} else if (strcmp(policy, "jsqPart") == 0) {
+		jsqPart(servers);
 	} else if (strcmp(policy, "jsqMaxweight") == 0) {
 		jsqMaxweight(servers, commonQueue);
 	}
@@ -249,6 +257,83 @@ void o3CrossPart(Server** servers) {
 		}
 	}
 	free(jobBuffer.jobs);
+}
+
+void jsq(Server** servers) {
+	// JSQ (virtual queue) routing
+	JobBuffer jobBuffer = newJobs();
+	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
+		Job* job = jobBuffer.jobs[i];
+		uint32_t shortestVirtualQueueLength = UINT32_MAX;
+		uint32_t shortestVirtualQueueIndex = 0;
+		for (uint32_t j = 0; j < REGION_CNT; j ++) {
+			uint32_t virtualQueueLength = servers[j]->waitingQueue->virtualSize;
+			if (virtualQueueLength < shortestVirtualQueueLength) {
+				shortestVirtualQueueLength = virtualQueueLength;
+				shortestVirtualQueueIndex = j;
+			}
+		}
+		pushQueueVirtual(servers[shortestVirtualQueueIndex], job);
+	}
+	free(jobBuffer.jobs);
+	// Scheduling
+	for (uint32_t i = 0; i < REGION_CNT; i ++) {
+		Server* server = servers[i];
+		Node* pos = server->waitingQueue->head;
+		while (pos != NULL) {
+			Job* job = pos->job;
+			Node* next = pos->next;
+			if (canServe(server, job)) {
+				assignJobToServer(server, job);
+				removeQueueVirtual(server, pos);
+			} else {
+				// Block the queue
+				break;
+			}
+			pos = next;
+		}
+	}
+}
+
+void jsqPart(Server** servers) {
+	// Same as jsq, but only route small jobs
+	// JSQ (virtual queue) routing
+	JobBuffer jobBuffer = newJobs();
+	for (uint32_t i = 0; i < jobBuffer.jobCnt; i ++) {
+		Job* job = jobBuffer.jobs[i];
+		if (job->jobType == 0) {
+			uint32_t shortestVirtualQueueLength = UINT32_MAX;
+			uint32_t shortestVirtualQueueIndex = 0;
+			for (uint32_t j = 0; j < REGION_CNT; j ++) {
+				uint32_t virtualQueueLength = servers[j]->waitingQueue->virtualSize;
+				if (virtualQueueLength < shortestVirtualQueueLength) {
+					shortestVirtualQueueLength = virtualQueueLength;
+					shortestVirtualQueueIndex = j;
+				}
+			}
+			pushQueueVirtual(servers[shortestVirtualQueueIndex], job);
+		} else {
+			pushQueueVirtual(servers[job->region], job);
+		}
+	}
+	free(jobBuffer.jobs);
+	// Scheduling
+	for (uint32_t i = 0; i < REGION_CNT; i ++) {
+		Server* server = servers[i];
+		Node* pos = server->waitingQueue->head;
+		while (pos != NULL) {
+			Job* job = pos->job;
+			Node* next = pos->next;
+			if (canServe(server, job)) {
+				assignJobToServer(server, job);
+				removeQueueVirtual(server, pos);
+			} else {
+				// Block the queue
+				break;
+			}
+			pos = next;
+		}
+	}
 }
 
 void jsqMaxweight(Server** servers, Queue* commonQueue) {

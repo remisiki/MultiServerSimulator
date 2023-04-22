@@ -24,6 +24,7 @@ typedef struct Queue {
 	Node* head;
 	Node* tail;
 	uint32_t size;
+	uint32_t virtualSize;
 } Queue;
 
 /**

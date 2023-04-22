@@ -10,6 +10,8 @@
 * - o3CrossPart: Out Of Order, only small jobs may be served at a remote server
 *   if current region is congested and smaller jobs coming late may get served
 *   first
+* - jsq: Join the shortest (virtual) queue.
+* - jsqPart: Join the shortest (virtual) queue, but only small jobs.
 * - jsqMaxweight: Proposed in Weina et al. 2016. Push job to join the shortest
 *   queue and use Max Weight algorithm to schedule which queue to serve.
 */

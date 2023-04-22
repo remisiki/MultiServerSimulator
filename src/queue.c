@@ -5,6 +5,7 @@ Queue* newQueue() {
 	q->head = NULL;
 	q->tail = NULL;
 	q->size = 0;
+	q->virtualSize = 0;
 	return q;
 }
 

@@ -65,4 +65,14 @@ void serveJobs(Server* server);
 */
 uint8_t canServe(Server* server, Job* job);
 
+/**
+* Push a job to the server waiting queue, and add to virtual size
+*/
+void pushQueueVirtual(Server* server, Job* job);
+
+/**
+* Remove a node from the server waiting queue, and subtract virtual size
+*/
+void removeQueueVirtual(Server* server, Node* node);
+
 #endif

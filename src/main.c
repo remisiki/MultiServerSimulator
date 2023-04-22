@@ -187,12 +187,12 @@ int main(int argc, const char* argv[]) {
 	for (uint32_t timestamp = 0; timestamp < SIMULATION_TIME; timestamp ++) {
 		if (verbose) printf("%d/%d\r", timestamp+1, SIMULATION_TIME);
 		if (strcmp(POLICY, "jsqMaxweight") == 0) {
-			expectedQueueLength += schedule(servers, POLICY, commonQueue);
+			expectedQueueLength += schedule(servers, POLICY, commonQueue)/(REGION_CNT+1);
 		} else {
-			expectedQueueLength += schedule(servers, POLICY, NULL);
+			expectedQueueLength += schedule(servers, POLICY, NULL)/REGION_CNT;
 		}
 	}
-	expectedQueueLength /= (SIMULATION_TIME*REGION_CNT);
+	expectedQueueLength /= SIMULATION_TIME;
 	// For the queueing delay metric, only count jobs that already departed,
 	// since those still in the queue have unknown final waitTime.
 	uint32_t sumDepartedJobCnt = 0;

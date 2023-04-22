@@ -37,6 +37,9 @@ uint32_t schedule(Server** servers, const char* policy, Queue* commonQueue) {
 		/* printf("Server %d queue length %d\n", i, getQueueSize(server->waitingQueue)); */
 		sumQueueLength += getQueueSize(server->waitingQueue);
 	}
+	if (commonQueue != NULL) {
+		sumQueueLength += getQueueSize(commonQueue);
+	}
 	return sumQueueLength;
 }
 
